@@ -121,17 +121,32 @@ pytest tests/ -v
 
 ## Results Summary
 
-The best-performing model achieved an Accuracy/R² of `0.XX`. Detailed logs and experiment comparisons can be viewed via the MLflow UI after running `mlflow ui`.
+Five model configurations were trained and tracked with MLflow on the AG News dataset (120,000 training samples, 4 classes):
+
+| Model | Accuracy | F1 Weighted | F1 Macro | Precision |
+|---|---|---|---|---|
+| LogisticRegression (C=1.0) | — | — | — | — |
+| LogisticRegression (C=0.1) | — | — | — | — |
+| LinearSVC (C=1.0) | — | — | — | — |
+| RandomForest (100 trees) | — | — | — | — |
+| NaiveBayes | — | — | — | — |
+
+> Fill in metric values after running `python src/train.py`. The best run is selected automatically by highest weighted F1 score via `mlflow.search_runs()`.
+
+Detailed logs and experiment comparisons can be viewed via the MLflow UI:
+```bash
+mlflow ui
+```
 
 ---
 
 ## Reflection
 
-**Challenges:** *(Briefly describe a technical hurdle, e.g., prompt engineering for reliable feature extraction from ambiguous user input.)*
+**Challenges:** The main technical challenge was ensuring the TF-IDF vectorizers fitted on training data were reused consistently across training, evaluation, and the app — without data leakage from the test set. Structuring the pipeline so the same vocabulary is applied at inference time required careful separation of `fit_transform` (training only) from `transform` (validation/test/app).
 
-**Learnings:** *(Highlight a key takeaway from the MLOps or LLM integration process.)*
+**Learnings:** MLflow experiment tracking is invaluable for comparing models objectively. Using `mlflow.search_runs()` to programmatically rank runs by a target metric eliminates manual comparison and makes the best-model selection fully reproducible. Making the LLM interface optional (falling back to rule-based logic when no API key is present) also improved the robustness of the application.
 
-**Future Work:** *(Mention potential improvements, e.g., a web-based UI, streaming responses, or model retraining on new data.)*
+**Future Work:** Potential improvements include: (1) a lightweight web UI using Streamlit or Gradio, (2) fine-tuning a small transformer (e.g. DistilBERT) on AG News for higher accuracy, (3) adding hyperparameter search with MLflow's `mlflow.sklearn.autolog()`, and (4) streaming LLM responses for a more interactive experience.
 
 
 ## Dataset

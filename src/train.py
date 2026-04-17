@@ -6,8 +6,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.svm import LinearSVC
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score
 from scipy.sparse import hstack
 
 
@@ -23,9 +24,9 @@ def load_training_data(path: str) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-def build_features(train_df: pd.DataFrame, val_df: pd.DataFrame):
-    tfidf_title = TfidfVectorizer(max_features=3000)
-    tfidf_desc  = TfidfVectorizer(max_features=5000)
+def build_features(train_df: pd.DataFrame, val_df: pd.DataFrame, config: dict):
+    tfidf_title = TfidfVectorizer(max_features=config["tfidf"]["max_features_title"])
+    tfidf_desc  = TfidfVectorizer(max_features=config["tfidf"]["max_features_desc"])
 
     X_train = hstack([
         tfidf_title.fit_transform(train_df["Title"].fillna("")),
@@ -53,12 +54,15 @@ def train(config: dict) -> str:
         stratify=y,
     )
 
-    X_train, X_val = build_features(train_df, val_df)
+    X_train, X_val = build_features(train_df, val_df, config)
 
+    # 5 distinct configurations
     candidates = [
-        ("LogisticRegression", LogisticRegression(max_iter=1000, random_state=config["training"]["random_state"])),
-        ("RandomForest",       RandomForestClassifier(n_estimators=100, random_state=config["training"]["random_state"])),
-        ("NaiveBayes",         MultinomialNB()),
+        ("LogisticRegression_C1",  LogisticRegression(C=config["training"]["lr_C"],   max_iter=1000, random_state=config["training"]["random_state"])),
+        ("LogisticRegression_C01", LogisticRegression(C=0.1,                          max_iter=1000, random_state=config["training"]["random_state"])),
+        ("RandomForest",           RandomForestClassifier(n_estimators=config["training"]["rf_n_estimators"], random_state=config["training"]["random_state"])),
+        ("LinearSVC",              LinearSVC(C=config["training"]["svc_C"],            max_iter=2000, random_state=config["training"]["random_state"])),
+        ("NaiveBayes",             MultinomialNB()),
     ]
 
     best_run_id = None
@@ -69,19 +73,25 @@ def train(config: dict) -> str:
             model.fit(X_train, y_train)
             preds = model.predict(X_val)
 
-            acc = accuracy_score(y_val, preds)
-            f1  = f1_score(y_val, preds, average="weighted")
+            acc       = accuracy_score(y_val, preds)
+            f1_w      = f1_score(y_val, preds, average="weighted")
+            f1_macro  = f1_score(y_val, preds, average="macro")
+            precision = precision_score(y_val, preds, average="weighted")
 
             mlflow.log_param("model", name)
+            mlflow.log_param("tfidf_max_features_title", config["tfidf"]["max_features_title"])
+            mlflow.log_param("tfidf_max_features_desc",  config["tfidf"]["max_features_desc"])
             mlflow.log_params(config["training"])
-            mlflow.log_metric("accuracy", acc)
-            mlflow.log_metric("f1_weighted", f1)
+            mlflow.log_metric("accuracy",          acc)
+            mlflow.log_metric("f1_weighted",       f1_w)
+            mlflow.log_metric("f1_macro",          f1_macro)
+            mlflow.log_metric("precision_weighted", precision)
             mlflow.sklearn.log_model(model, artifact_path="model")
 
-            print(f"{name:25s}  accuracy={acc:.4f}  f1={f1:.4f}")
+            print(f"{name:25s}  accuracy={acc:.4f}  f1_weighted={f1_w:.4f}  f1_macro={f1_macro:.4f}  precision={precision:.4f}")
 
-            if f1 > best_f1:
-                best_f1     = f1
+            if f1_w > best_f1:
+                best_f1     = f1_w
                 best_run_id = mlflow.active_run().info.run_id
 
     print(f"\nBest run : {best_run_id}")

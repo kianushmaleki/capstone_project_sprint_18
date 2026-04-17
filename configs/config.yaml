@@ -1,17 +1,21 @@
 model:
-  name: "your_model_name"
+  name: "ag_news_classifier"
   version: "1.0"
 
 training:
-  learning_rate: 0.001
-  epochs: 10
-  batch_size: 32
   test_size: 0.2
   random_state: 42
+  lr_C: 1.0
+  rf_n_estimators: 100
+  svc_C: 1.0
+
+tfidf:
+  max_features_title: 3000
+  max_features_desc: 5000
 
 data:
   raw_path: "data/raw"
   processed_path: "data/processed"
 
 mlflow:
-  experiment_name: "default"
+  experiment_name: "ag_news"

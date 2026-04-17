@@ -6,6 +6,26 @@ def load_data(path: str) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
+def clean_data(df: pd.DataFrame) -> pd.DataFrame:
+    """Drop rows with nulls in key columns and reset the index."""
+    before = len(df)
+    df = df.dropna(subset=df.columns.tolist()).reset_index(drop=True)
+    after = len(df)
+    if before != after:
+        print(f"Dropped {before - after} rows with missing values ({after} remaining)")
+    return df
+
+
+def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
+    """Combine Title and Description into a single text field for richer features."""
+    df = df.copy()
+    df["text"] = df["Title"].fillna("") + " " + df["Description"].fillna("")
+    df["text"] = df["text"].str.lower().str.strip()
+    df["title_len"] = df["Title"].fillna("").str.split().str.len()
+    df["desc_len"]  = df["Description"].fillna("").str.split().str.len()
+    return df
+
+
 def plot_class_distribution(df: pd.DataFrame) -> None:
     class_labels = {1: "World", 2: "Sports", 3: "Business", 4: "Sci/Tech"}
 
@@ -33,5 +53,6 @@ if __name__ == "__main__":
     print(data.info())
     print(data.describe())
     print(data.head())
+    data = clean_data(data)
+    data = feature_engineering(data)
     plot_class_distribution(data)
-
