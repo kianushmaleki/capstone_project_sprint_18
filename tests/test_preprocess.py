@@ -1,16 +1,36 @@
 import pytest
 import pandas as pd
-from src.preprocess import clean_data, feature_engineering
+from unittest.mock import patch
+from src.preprocess import load_data, plot_class_distribution
 
 
-def test_clean_data_drops_nulls():
-    df = pd.DataFrame({"a": [1, None, 3], "b": [4, 5, 6]})
-    result = clean_data(df)
-    assert result.isnull().sum().sum() == 0
-    assert len(result) == 2
+def test_load_data_returns_dataframe(tmp_path):
+    csv = tmp_path / "train.csv"
+    csv.write_text("class,Title,Description\n1,Hello,World\n2,Foo,Bar\n")
+    df = load_data(str(csv))
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) == 2
 
 
-def test_feature_engineering_returns_dataframe():
-    df = pd.DataFrame({"a": [1, 2, 3]})
-    result = feature_engineering(df)
-    assert isinstance(result, pd.DataFrame)
+def test_load_data_columns(tmp_path):
+    csv = tmp_path / "train.csv"
+    csv.write_text("class,Title,Description\n1,Hello,World\n")
+    df = load_data(str(csv))
+    assert list(df.columns) == ["class", "Title", "Description"]
+
+
+def test_plot_class_distribution_runs_without_error():
+    df = pd.DataFrame({
+        "class_index": [1, 1, 2, 3, 3, 3, 4],
+        "Title":       ["t"] * 7,
+        "Description": ["d"] * 7,
+    })
+    with patch("matplotlib.pyplot.show"):
+        plot_class_distribution(df)
+
+
+def test_plot_class_distribution_all_four_classes():
+    df = pd.DataFrame({"class_index": [1, 2, 3, 4]})
+    with patch("matplotlib.pyplot.show"):
+        # Should not raise even with one sample per class
+        plot_class_distribution(df)

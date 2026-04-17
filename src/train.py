@@ -23,36 +23,37 @@ def load_training_data(path: str) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-def build_features(train_df: pd.DataFrame, test_df: pd.DataFrame):
+def build_features(train_df: pd.DataFrame, val_df: pd.DataFrame):
     tfidf_title = TfidfVectorizer(max_features=3000)
-    tfidf_desc = TfidfVectorizer(max_features=5000)
+    tfidf_desc  = TfidfVectorizer(max_features=5000)
 
     X_train = hstack([
         tfidf_title.fit_transform(train_df["Title"].fillna("")),
         tfidf_desc.fit_transform(train_df["Description"].fillna("")),
     ])
-    X_test = hstack([
-        tfidf_title.transform(test_df["Title"].fillna("")),
-        tfidf_desc.transform(test_df["Description"].fillna("")),
+    X_val = hstack([
+        tfidf_title.transform(val_df["Title"].fillna("")),
+        tfidf_desc.transform(val_df["Description"].fillna("")),
     ])
-    return X_train, X_test, tfidf_title, tfidf_desc
+
+    print(f"Feature vector length: {X_train.shape[1]}")
+    return X_train, X_val
 
 
-def train(config: dict) -> None:
+def train(config: dict) -> str:
     mlflow.set_experiment(config["mlflow"]["experiment_name"])
 
-    df = load_training_data(f"{config['data']['raw_path']}/train.csv")
-    y = df.iloc[:, 0]
+    data = load_training_data(f"{config['data']['raw_path']}/train.csv")
+    y    = data.iloc[:, 0]
 
     train_df, val_df, y_train, y_val = train_test_split(
-        df,
-        y,
+        data, y,
         test_size=config["training"]["test_size"],
         random_state=config["training"]["random_state"],
         stratify=y,
     )
 
-    X_train, X_val, tfidf_title, tfidf_desc = build_features(train_df, val_df)
+    X_train, X_val = build_features(train_df, val_df)
 
     candidates = [
         ("LogisticRegression", LogisticRegression(max_iter=1000, random_state=config["training"]["random_state"])),
@@ -61,7 +62,7 @@ def train(config: dict) -> None:
     ]
 
     best_run_id = None
-    best_f1 = -1
+    best_f1     = -1
 
     for name, model in candidates:
         with mlflow.start_run(run_name=name):
@@ -80,10 +81,11 @@ def train(config: dict) -> None:
             print(f"{name:25s}  accuracy={acc:.4f}  f1={f1:.4f}")
 
             if f1 > best_f1:
-                best_f1 = f1
+                best_f1     = f1
                 best_run_id = mlflow.active_run().info.run_id
 
-    print(f"\nBest run: {best_run_id}  (f1={best_f1:.4f})")
+    print(f"\nBest run : {best_run_id}")
+    print(f"Best f1  : {best_f1:.4f}")
     return best_run_id
 
 
