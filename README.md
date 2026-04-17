@@ -137,6 +137,8 @@ The best-performing model achieved an Accuracy/R² of `0.XX`. Detailed logs and 
 ## Dataset
 
 The dataset used in this project is the **AG News Topic Classification Dataset**, sourced from [Kaggle](https://www.kaggle.com/).
+Link to data : https://www.kaggle.com/datasets/amananandrai/ag-news-classification-dataset
+
 
 ### Origin
 

@@ -34,3 +34,4 @@ if __name__ == "__main__":
     print(data.describe())
     print(data.head())
     plot_class_distribution(data)
+
