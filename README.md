@@ -132,3 +132,46 @@ The best-performing model achieved an Accuracy/R² of `0.XX`. Detailed logs and 
 **Learnings:** *(Highlight a key takeaway from the MLOps or LLM integration process.)*
 
 **Future Work:** *(Mention potential improvements, e.g., a web-based UI, streaming responses, or model retraining on new data.)*
+
+
+## Dataset
+
+The dataset used in this project is the **AG News Topic Classification Dataset**, sourced from [Kaggle](https://www.kaggle.com/).
+
+### Origin
+
+AG News is a collection of more than 1 million news articles gathered from over 2,000 news sources by [ComeToMyHead](http://www.di.unipi.it/~gulli/AG_corpus_of_news_articles.html), an academic news search engine active since July 2004. The dataset is provided by the academic community for research purposes in data mining, information retrieval, and related non-commercial activities.
+
+The topic classification dataset was constructed by Xiang Zhang (xiang.zhang@nyu.edu) and used as a text classification benchmark in:
+
+> Xiang Zhang, Junbo Zhao, Yann LeCun. *Character-level Convolutional Networks for Text Classification.* Advances in Neural Information Processing Systems 28 (NIPS 2015).
+
+### Description
+
+The dataset is built from the 4 largest topic classes in the original corpus:
+
+| Split | Samples per class | Total samples |
+|-------|------------------|---------------|
+| Train | 30,000           | 120,000       |
+| Test  | 1,900            | 7,600         |
+
+### Classes
+
+| Index | Label |
+|-------|-------|
+| 1     | World |
+| 2     | Sports |
+| 3     | Business |
+| 4     | Sci/Tech |
+
+### File Format
+
+| File | Description |
+|------|-------------|
+| `train.csv` | Training samples (120,000 rows) |
+| `test.csv` | Test samples (7,600 rows) |
+| `classes.txt` | Label index to class name mapping |
+
+Each CSV contains 3 columns: **class index** (1–4), **title**, and **description**. Text fields are double-quoted; internal double quotes are escaped as `""`. Newlines within fields are escaped as `\n`.
+
+> **Note:** Data files are not committed to this repository. Download the dataset from Kaggle and place the files under `data/raw/`.
