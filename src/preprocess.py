@@ -1,40 +1,36 @@
 import pandas as pd
-import yaml
-from pathlib import Path
-
-
-def load_config(config_path: str = "configs/config.yaml") -> dict:
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+import matplotlib.pyplot as plt
 
 
 def load_data(path: str) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-def clean_data(df: pd.DataFrame) -> pd.DataFrame:
-    # Add your cleaning logic here
-    df = df.dropna()
-    return df
+def plot_class_distribution(df: pd.DataFrame) -> None:
+    class_labels = {1: "World", 2: "Sports", 3: "Business", 4: "Sci/Tech"}
 
+    counts = df.iloc[:, 0].value_counts().sort_index()
+    labels = [class_labels.get(i, str(i)) for i in counts.index]
 
-def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
-    # Add your feature engineering logic here
-    return df
+    _, ax = plt.subplots(figsize=(8, 5))
+    bars = ax.bar(labels, counts.values, color=["#4C72B0", "#DD8452", "#55A868", "#C44E52"], edgecolor="white")
 
+    for bar, count in zip(bars, counts.values):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 200,
+                f"{count:,}", ha="center", va="bottom", fontsize=10)
 
-def preprocess(input_path: str, output_path: str) -> None:
-    df = load_data(input_path)
-    df = clean_data(df)
-    df = feature_engineering(df)
-    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(output_path, index=False)
-    print(f"Processed data saved to {output_path}")
+    ax.set_title("Class Index Distribution (AG News)", fontsize=14, fontweight="bold")
+    ax.set_xlabel("Class", fontsize=12)
+    ax.set_ylabel("Number of Samples", fontsize=12)
+    ax.set_ylim(0, counts.max() * 1.12)
+    ax.grid(axis="y", linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == "__main__":
-    config = load_config()
-    preprocess(
-        input_path=f"{config['data']['raw_path']}/data.csv",
-        output_path=f"{config['data']['processed_path']}/data.csv",
-    )
+    data = load_data("data/raw/train.csv")
+    print(data.info())
+    print(data.describe())
+    print(data.head())
+    plot_class_distribution(data)
