@@ -1,3 +1,4 @@
+import warnings
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -44,7 +45,9 @@ def plot_class_distribution(df: pd.DataFrame) -> None:
     ax.set_ylabel("Number of Samples", fontsize=12)
     ax.set_ylim(0, counts.max() * 1.12)
     ax.grid(axis="y", linestyle="--", alpha=0.5)
-    plt.tight_layout()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        plt.tight_layout()
     plt.show()
 
 

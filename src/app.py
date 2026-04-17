@@ -24,9 +24,12 @@ Given a user's free-text input, extract a news article title and description.
 Respond ONLY with a valid JSON object in this exact format:
 {
   "title": "<short headline>",
-  "description": "<one or two sentence summary>"
+  "description": "<one or two sentence summary>",
+  "out_of_scope": false
 }
-If the input is too vague or off-topic, set both fields to empty strings."""
+Set "out_of_scope" to true if the input is a personal question, a general chat message,
+or anything that is clearly not a news article (e.g. "what is 2+2", "how are you", "tell me a joke").
+If the input is too vague to extract a title or description, set both text fields to empty strings."""
 
 EXPLAIN_SYSTEM_PROMPT = """You are a helpful assistant that explains news classification results.
 Given an article and its predicted category, write a short 2-3 sentence explanation of why it
@@ -84,7 +87,7 @@ def _llm_parse(user_text: str, client) -> dict:
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
-        return {"title": "", "description": ""}
+        return {"title": "", "description": "", "out_of_scope": False}
 
 
 def _rule_parse(user_text: str) -> dict:
@@ -166,6 +169,10 @@ def main():
         parsed      = parse_input(user_input, client)
         title       = parsed.get("title", "").strip()
         description = parsed.get("description", "").strip()
+
+        if parsed.get("out_of_scope"):
+            print("Assistant: I'm a news classifier — I can only categorise news articles into World, Sports, Business, or Sci/Tech. Try describing a news story.\n")
+            continue
 
         if not title and not description:
             print("Assistant: I couldn't extract enough information. Could you describe the news article in more detail?\n")

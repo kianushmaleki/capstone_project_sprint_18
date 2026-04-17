@@ -1,8 +1,13 @@
-# Capstone Project: End-to-End Intelligent ML Application
+# AG News Classifier: End-to-End Intelligent ML Application
 
 ## Overview
 
-This project is an end-to-end intelligent application that bridges traditional machine learning with a natural language interface. The system consists of a trained predictive model (Classification/Regression) and an LLM-powered interface that allows users to interact with the model using plain English.
+This project is an end-to-end intelligent application that classifies news articles into four categories — **World**, **Sports**, **Business**, and **Sci/Tech** — using the [AG News dataset](https://www.kaggle.com/datasets/amananandrai/ag-news-classification-dataset).
+
+Users interact with the system in plain English. They describe a news story and the application parses their input, runs it through a trained ML classifier, and returns a category with a natural language explanation. For example:
+
+> **You:** "Apple just announced a new chip that outperforms all competitors in benchmark tests."
+> **Assistant:** Category: Sci/Tech — This article involves science, technology, innovation, or research developments.
 
 The project emphasizes production-level thinking, including experiment tracking with MLflow, automated testing, and modular software architecture.
 
@@ -60,6 +65,34 @@ capstone_project_sprint_18/
 └── data/
     └── .gitkeep                # Data directory (not committed to Git)
 ```
+
+---
+
+## Architecture Overview
+
+```
+User (plain English)
+        │
+        ▼
+  parse_input()          ← LLM (Anthropic API) if key present,
+        │                   rule-based split otherwise
+        ▼
+ TF-IDF Vectorizer       ← fit on training set (Title + Description)
+        │                   combined via scipy sparse hstack
+        ▼
+  Best MLflow Model      ← loaded via mlflow.search_runs() → best f1_weighted
+        │
+        ▼
+  Class Index (1–4)
+        │
+        ▼
+ explain_prediction()    ← LLM generates contextual explanation,
+        │                   or static template if no API key
+        ▼
+  Category + Explanation
+```
+
+The ML model and LLM are deliberately decoupled: the model handles the classification, and the LLM handles language understanding and explanation. This means the classifier can be swapped out without changing the interface layer.
 
 ---
 
@@ -125,13 +158,13 @@ Five model configurations were trained and tracked with MLflow on the AG News da
 
 | Model | Accuracy | F1 Weighted | F1 Macro | Precision |
 |---|---|---|---|---|
-| LogisticRegression (C=1.0) | — | — | — | — |
-| LogisticRegression (C=0.1) | — | — | — | — |
-| LinearSVC (C=1.0) | — | — | — | — |
-| RandomForest (100 trees) | — | — | — | — |
-| NaiveBayes | — | — | — | — |
+| **LogisticRegression (C=1.0)** ✓ | **0.9077** | **0.9075** | **0.9075** | **0.9074** |
+| LogisticRegression (C=0.1) | 0.9003 | 0.9000 | 0.9000 | 0.9000 |
+| LinearSVC (C=1.0) | 0.9048 | 0.9046 | 0.9046 | 0.9045 |
+| RandomForest (100 trees) | 0.8656 | 0.8650 | 0.8650 | 0.8653 |
+| NaiveBayes | 0.8929 | 0.8925 | 0.8925 | 0.8924 |
 
-> Fill in metric values after running `python src/train.py`. The best run is selected automatically by highest weighted F1 score via `mlflow.search_runs()`.
+**Best model: LogisticRegression (C=1.0)** — selected by highest weighted F1 score (0.9075) via `mlflow.search_runs()`. Logistic Regression outperforms the other configurations on this task because TF-IDF produces high-dimensional sparse linear features that are well-suited to linear classifiers. LinearSVC is a close second (F1 0.9046), while RandomForest underperforms as expected on sparse text data due to its sensitivity to feature redundancy.
 
 Detailed logs and experiment comparisons can be viewed via the MLflow UI:
 ```bash

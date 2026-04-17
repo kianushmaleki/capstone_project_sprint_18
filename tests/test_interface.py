@@ -10,6 +10,12 @@ from src.app import (
     CLASS_LABELS,
     CLASS_EXPLANATIONS,
 )
+from src.train import load_config
+
+
+@pytest.fixture
+def config():
+    return load_config()
 
 
 # --- parse_input ---
@@ -59,24 +65,24 @@ def test_explain_prediction_matches_class_explanations():
 
 # --- fit_vectorizers ---
 
-def test_fit_vectorizers_returns_two_vectorizers():
+def test_fit_vectorizers_returns_two_vectorizers(config):
     df = pd.DataFrame({
         "Title":       ["world politics", "sports game", "stock market"],
         "Description": ["global news", "team wins", "earnings rise"],
     })
-    v1, v2 = fit_vectorizers(df)
+    v1, v2 = fit_vectorizers(df, config)
     assert hasattr(v1, "transform")
     assert hasattr(v2, "transform")
 
 
 # --- predict ---
 
-def test_predict_returns_valid_class():
+def test_predict_returns_valid_class(config):
     df = pd.DataFrame({
         "Title":       ["tech launch", "election", "match result", "gdp growth"],
         "Description": ["new AI model", "voting results", "final score", "economy slows"],
     })
-    tfidf_title, tfidf_desc = fit_vectorizers(df)
+    tfidf_title, tfidf_desc = fit_vectorizers(df, config)
 
     mock_model = MagicMock()
     mock_model.predict.return_value = [2]
@@ -86,12 +92,12 @@ def test_predict_returns_valid_class():
     assert result in CLASS_LABELS
 
 
-def test_predict_passes_sparse_matrix_to_model():
+def test_predict_passes_sparse_matrix_to_model(config):
     df = pd.DataFrame({
         "Title":       ["news headline"],
         "Description": ["article body text"],
     })
-    tfidf_title, tfidf_desc = fit_vectorizers(df)
+    tfidf_title, tfidf_desc = fit_vectorizers(df, config)
 
     mock_model = MagicMock()
     mock_model.predict.return_value = [1]
