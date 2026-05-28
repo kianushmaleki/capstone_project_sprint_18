@@ -1,5 +1,12 @@
 # AG News Classifier: End-to-End Intelligent ML Application
 
+> This repository has moved to:
+>
+> https://github.com/drkianmaleki/AG-News-Classifier
+>
+> The `drkianmaleki` version is the maintained professional portfolio version of this project.
+
+
 ## Overview
 
 This project is an end-to-end intelligent application that classifies news articles into four categories — **World**, **Sports**, **Business**, and **Sci/Tech** — using the [AG News dataset](https://www.kaggle.com/datasets/amananandrai/ag-news-classification-dataset).
